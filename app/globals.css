@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Thème sombre (par défaut) */
+  --bg: #0a0a0f;
+  --bg-soft: #0d0d14;
+  --bg-card: #12121c;
+  --bg-border: #1f1f2e;
+  --text: #e5e7eb;
+  --text-faint: #6b7280;
+  --glow-magenta: rgba(217, 70, 239, 0.08);
+  --glow-cyan: rgba(34, 211, 238, 0.08);
+}
+
+[data-theme="light"] {
+  /* Thème clair */
+  --bg: #eef0f5;
+  --bg-soft: #ffffff;
+  --bg-card: #ffffff;
+  --bg-border: #d6dae3;
+  --text: #1f2937;
+  --text-faint: #94a3b8;
+  --glow-magenta: rgba(217, 70, 239, 0.10);
+  --glow-cyan: rgba(34, 211, 238, 0.12);
+}
+
 html {
   scroll-behavior: smooth;
   /* Décale les ancres pour ne pas passer sous la navbar fixe. */
@@ -9,14 +33,30 @@ html {
 }
 
 body {
-  background-color: #0a0a0f;
-  color: #e5e7eb;
+  background-color: var(--bg);
+  color: var(--text);
   /* Léger halo néon en arrière-plan. */
   background-image:
-    radial-gradient(60rem 60rem at 80% -10%, rgba(217, 70, 239, 0.08), transparent 60%),
-    radial-gradient(50rem 50rem at -10% 20%, rgba(34, 211, 238, 0.08), transparent 60%);
+    radial-gradient(60rem 60rem at 80% -10%, var(--glow-magenta), transparent 60%),
+    radial-gradient(50rem 50rem at -10% 20%, var(--glow-cyan), transparent 60%);
   background-attachment: fixed;
 }
+
+/* En mode clair, le texte par défaut sombre/gris (les composants utilisent
+   text-white / text-gray-* pensés pour le fond sombre). */
+[data-theme="light"] .text-white { color: #0f172a; }
+[data-theme="light"] .text-gray-200 { color: #1f2937; }
+[data-theme="light"] .text-gray-300 { color: #374151; }
+[data-theme="light"] .text-gray-400 { color: #4b5563; }
+[data-theme="light"] .text-gray-500 { color: #6b7280; }
+[data-theme="light"] .text-gray-600 { color: #94a3b8; }
+/* Les cartes joueurs (article) restent sombres (splash) : on garde un texte clair. */
+[data-theme="light"] article .text-white { color: #ffffff; }
+[data-theme="light"] article .text-gray-200 { color: #e5e7eb; }
+[data-theme="light"] article .text-gray-300 { color: #d1d5db; }
+[data-theme="light"] article .text-gray-400 { color: #9ca3af; }
+[data-theme="light"] article .text-gray-500 { color: #9ca3af; }
+[data-theme="light"] article .text-gray-600 { color: #6b7280; }
 
 @layer components {
   .neon-text {
@@ -34,12 +74,45 @@ body {
   }
 
   .card {
-    background-color: #12121c;
-    border: 1px solid #1f1f2e;
+    background-color: var(--bg-card);
+    border: 1px solid var(--bg-border);
     border-radius: 1rem;
   }
 
   .section-title {
     @apply font-display text-3xl sm:text-4xl font-bold tracking-wider uppercase;
+  }
+}
+
+/* --- Décor animé du hero ------------------------------------------------- */
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(34, 211, 238, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(217, 70, 239, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  /* Fond en perspective, fondu vers le haut */
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 40%, transparent 80%);
+  animation: grid-pan 20s linear infinite;
+}
+
+.hero-blob {
+  filter: blur(70px);
+  animation: blob-float 14s ease-in-out infinite;
+}
+
+@keyframes grid-pan {
+  from { background-position: 0 0; }
+  to { background-position: 48px 48px; }
+}
+
+@keyframes blob-float {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  50% { transform: translate(30px, -20px) scale(1.15); opacity: 0.9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-grid,
+  .hero-blob {
+    animation: none;
   }
 }

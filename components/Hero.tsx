@@ -5,8 +5,18 @@ export default function Hero() {
   return (
     <section
       id="accueil"
-      className="relative flex min-h-screen flex-col items-center justify-center px-4 text-center"
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 text-center"
     >
+      {/* Décor animé : grille en perspective + halos néon flottants */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="hero-grid absolute inset-0" />
+        <div className="hero-blob absolute left-1/4 top-1/3 h-72 w-72 rounded-full bg-neon-cyan/30" />
+        <div
+          className="hero-blob absolute right-1/4 bottom-1/4 h-72 w-72 rounded-full bg-neon-magenta/30"
+          style={{ animationDelay: "-7s" }}
+        />
+      </div>
+
       <div className="animate-fade-up">
         <div className="mx-auto mb-8 flex h-28 w-28 items-center justify-center rounded-2xl border border-bg-border bg-bg-card shadow-neon-cyan sm:h-32 sm:w-32">
           <Image

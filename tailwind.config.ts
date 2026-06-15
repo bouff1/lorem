@@ -9,10 +9,10 @@ const config: Config = {
     extend: {
       colors: {
         bg: {
-          DEFAULT: "#0a0a0f",
-          soft: "#0d0d14",
-          card: "#12121c",
-          border: "#1f1f2e",
+          DEFAULT: "var(--bg)",
+          soft: "var(--bg-soft)",
+          card: "var(--bg-card)",
+          border: "var(--bg-border)",
         },
         neon: {
           cyan: "#22d3ee",

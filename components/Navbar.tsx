@@ -1,9 +1,11 @@
 import { team } from "@/data/team";
+import ThemeToggle from "./ThemeToggle";
 
 const links = [
   { href: "#accueil", label: "Accueil" },
   { href: "#joueurs", label: "Joueurs" },
   { href: "#matchs", label: "Matchs" },
+  { href: "#evolution", label: "Progression" },
   { href: "#classement", label: "Classement" },
 ];
 
@@ -14,18 +16,21 @@ export default function Navbar() {
         <a href="#accueil" className="font-display text-lg font-bold tracking-widest gradient-text">
           {team.nom}
         </a>
-        <ul className="flex items-center gap-4 text-sm sm:gap-7">
-          {links.map((link) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                className="text-gray-300 transition-colors hover:text-neon-cyan"
-              >
-                {link.label}
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div className="flex items-center gap-4 sm:gap-7">
+          <ul className="flex items-center gap-4 text-sm sm:gap-7">
+            {links.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  className="text-gray-300 transition-colors hover:text-neon-cyan"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <ThemeToggle />
+        </div>
       </nav>
     </header>
   );

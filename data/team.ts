@@ -31,6 +31,8 @@ export interface Player {
    * "Sylas"). Si absent, on prend automatiquement le champion le plus maîtrisé.
    */
   championOverride?: string;
+  /** true pour le capitaine de l'équipe (badge sur la carte). */
+  isCaptain?: boolean;
   socials?: Social[];
 }
 
@@ -107,6 +109,7 @@ export const players: Player[] = [
     rang: "—",
     riotId: { gameName: "gOfursel", tagLine: "pidid" },
     championOverride: "Hecarim",
+    isCaptain: true,
     opggUrl: "https://www.op.gg/summoners/euw/gOfursel-pidid",
   },
   {

@@ -23,8 +23,9 @@ yarn-error.log*
 .env
 .env*.local
 
-# instantané Riot généré par le planificateur
+# données Riot générées par le planificateur (runtime)
 /data/riot-snapshot.json
+/data/riot-history.json
 
 # typescript
 *.tsbuildinfo
