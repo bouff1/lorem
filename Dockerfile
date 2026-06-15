@@ -22,9 +22,15 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+# Instantané Riot écrit dans /data (à monter en volume pour le rendre persistant).
+ENV RIOT_SNAPSHOT_PATH=/data/riot-snapshot.json
 
 # Utilisateur non-root
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+
+# Dossier persistant pour l'instantané, accessible par l'utilisateur nextjs.
+RUN mkdir -p /data && chown nextjs:nodejs /data
+VOLUME ["/data"]
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

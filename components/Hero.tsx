@@ -35,7 +35,7 @@ export default function Hero() {
             Découvrir l&apos;équipe
           </a>
           <a
-            href="#resultats"
+            href="#matchs"
             className="rounded-lg border border-bg-border px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-gray-200 transition-colors hover:border-neon-cyan hover:text-neon-cyan"
           >
             Nos résultats

@@ -3,7 +3,7 @@ import { team } from "@/data/team";
 const links = [
   { href: "#accueil", label: "Accueil" },
   { href: "#joueurs", label: "Joueurs" },
-  { href: "#resultats", label: "Résultats" },
+  { href: "#matchs", label: "Matchs" },
   { href: "#classement", label: "Classement" },
 ];
 

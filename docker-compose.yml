@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    # La clé Riot + la région sont lues depuis .env.local (non versionné).
+    env_file:
+      - .env.local
+    environment:
+      # L'instantané est écrit dans le volume => il survit aux redéploiements.
+      RIOT_SNAPSHOT_PATH: /data/riot-snapshot.json
+    volumes:
+      - riot-data:/data
+    restart: unless-stopped
+
+volumes:
+  riot-data:

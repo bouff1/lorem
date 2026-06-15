@@ -58,20 +58,58 @@ npm run start
 
 ---
 
-## Docker
+## Données Riot en direct + tâche de fond
+
+Le site affiche le rang et le champion le plus maîtrisé de chaque joueur via l'API Riot.
+
+- Une **tâche planifiée** (toutes les 10 min) récupère les données et les écrit dans un
+  **instantané** local (`riot-snapshot.json`). Voir [lib/scheduler.ts](lib/scheduler.ts).
+- Le site **lit l'instantané** (aucun appel Riot par visite → rapide).
+- **Résilience** : si Riot est injoignable (ou clé expirée), l'ancien instantané est
+  **conservé** — le site ne montre jamais du vide.
+
+La clé se met dans `.env.local` :
 
 ```bash
-# Construire l'image
-docker build -t ostap-lol .
-
-# Lancer le conteneur
-docker run -p 3000:3000 ostap-lol
+RIOT_API_KEY=RGAPI-xxxxxxxx
+RIOT_PLATFORM=euw1     # euw1, eun1, na1, kr...
+RIOT_REGION=europe     # europe, americas, asia
 ```
 
-Le site est alors accessible sur **http://localhost:3000**.
+> ⚠️ **Clé de dev vs production.** La clé de dev **expire toutes les 24 h** : la tâche
+> cessera alors de se mettre à jour (le site gardera le dernier instantané). Pour un
+> fonctionnement **24/7**, demande une **clé de production** (gratuite) sur
+> [developer.riotgames.com](https://developer.riotgames.com) → **Register Product**,
+> puis remplace la clé dans `.env.local`.
 
-> Astuce : lance `npm install` au moins une fois avant le build Docker pour générer
-> `package-lock.json` (build plus rapide et reproductible via `npm ci`).
+---
+
+## Docker (déploiement persistant)
+
+Le plus simple — avec Docker Compose (gère le volume + la clé + le redémarrage auto) :
+
+```bash
+npm install          # génère package-lock.json (build reproductible)
+docker compose up -d --build
+```
+
+Le site est accessible sur **http://localhost:3000**. La clé est lue depuis `.env.local`,
+et l'instantané est stocké dans le volume `riot-data` → **il survit aux redéploiements**.
+
+Sans Compose, avec `docker run` (penser au volume pour la persistance) :
+
+```bash
+docker build -t ostap-lol .
+docker run -d -p 3000:3000 \
+  --env-file .env.local \
+  -e RIOT_SNAPSHOT_PATH=/data/riot-snapshot.json \
+  -v riot-data:/data \
+  --restart unless-stopped \
+  ostap-lol
+```
+
+> Sans le volume (`-v riot-data:/data`), l'instantané est recréé au démarrage mais
+> **perdu à chaque redéploiement** — d'où l'intérêt du volume.
 
 ---
 

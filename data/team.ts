@@ -26,15 +26,33 @@ export interface Player {
    * l'API Riot. Optionnel : sans lui, on affiche le champ `rang` saisi à la main.
    */
   riotId?: { gameName: string; tagLine: string };
+  /**
+   * Force le champion affiché en fond de carte (clé Data Dragon, ex. "Hecarim",
+   * "Sylas"). Si absent, on prend automatiquement le champion le plus maîtrisé.
+   */
+  championOverride?: string;
   socials?: Social[];
 }
 
-export interface MatchResult {
-  date: string; // ex. "12 juin 2026"
+export type MatchType = "Officiel" | "Scrim" | "Clash";
+
+export interface Match {
+  /** Date affichée, ex. "10 mai 2026". */
+  date: string;
+  /** Heure, ex. "21:00" (optionnel). */
+  heure?: string;
   adversaire: string;
-  score: string; // ex. "2 - 1"
-  resultat: "victoire" | "défaite";
-  competition?: string; // ex. "Worlds 2026 — Groupes"
+  /** Logo de l'adversaire dans /public (ex. "/logos/teamx.png"). Sinon initiales. */
+  adversaireLogo?: string;
+  type: MatchType;
+  /** Nom de la compétition/tournoi, ex. "Clash — Coupe de Mai". */
+  competition?: string;
+  /**
+   * Score si le match est joué, ex. "2 - 1" (notre score en premier).
+   * Laisse vide/non défini pour un match À VENIR.
+   */
+  score?: string;
+  resultat?: "victoire" | "défaite";
 }
 
 export interface Standing {
@@ -58,7 +76,7 @@ export interface Team {
 //  ÉQUIPE
 // ----------------------------------------------------------------------------
 export const team: Team = {
-  nom: "OSTAP ESPORTS",
+  nom: "lorem",
   slogan: "Une équipe, un objectif : la Faille de l'Invocateur.",
   logo: "/logo.svg",
   socials: [
@@ -88,6 +106,7 @@ export const players: Player[] = [
     photo: "",
     rang: "—",
     riotId: { gameName: "gOfursel", tagLine: "pidid" },
+    championOverride: "Hecarim",
     opggUrl: "https://www.op.gg/summoners/euw/gOfursel-pidid",
   },
   {
@@ -96,6 +115,7 @@ export const players: Player[] = [
     photo: "",
     rang: "—",
     riotId: { gameName: "TheGATmPaulo", tagLine: "EUW" },
+    championOverride: "Sylas",
     opggUrl: "https://www.op.gg/summoners/euw/TheGATmPaulo-EUW",
   },
   {
@@ -117,36 +137,43 @@ export const players: Player[] = [
 ];
 
 // ----------------------------------------------------------------------------
-//  DERNIERS RÉSULTATS (du plus récent au plus ancien)
+//  CALENDRIER DES MATCHS
+//  - Match JOUÉ  : renseigne `score` + `resultat`.
+//  - Match À VENIR : laisse `score`/`resultat` vides.
+//  Les matchs sont automatiquement triés en "Résultats" / "À venir".
 // ----------------------------------------------------------------------------
-export const results: MatchResult[] = [
+export const matches: Match[] = [
+  // --- Matchs à venir (pas de score) ---
   {
-    date: "12 juin 2026",
+    date: "28 juin 2026",
+    heure: "21:00",
     adversaire: "Nova Dragons",
-    score: "2 - 1",
-    resultat: "victoire",
-    competition: "Worlds 2026 — Groupes",
+    type: "Officiel",
+    competition: "Ligue amateur — Journée 4",
   },
   {
-    date: "9 juin 2026",
-    adversaire: "Titan Gaming",
-    score: "0 - 2",
-    resultat: "défaite",
-    competition: "Worlds 2026 — Groupes",
-  },
-  {
-    date: "5 juin 2026",
+    date: "21 juin 2026",
+    heure: "20:30",
     adversaire: "Crimson Foxes",
-    score: "2 - 0",
-    resultat: "victoire",
-    competition: "Worlds 2026 — Groupes",
+    type: "Scrim",
   },
+
+  // --- Matchs joués (avec score) ---
   {
-    date: "1 juin 2026",
-    adversaire: "Aether Wolves",
+    date: "10 mai 2026",
+    adversaire: "Titan Gaming",
+    type: "Clash",
+    competition: "Clash — Coupe de Mai",
     score: "2 - 1",
     resultat: "victoire",
-    competition: "Qualifications",
+  },
+  {
+    date: "9 mai 2026",
+    adversaire: "Aether Wolves",
+    type: "Clash",
+    competition: "Clash — Coupe de Mai",
+    score: "1 - 2",
+    resultat: "défaite",
   },
 ];
 
@@ -155,7 +182,7 @@ export const results: MatchResult[] = [
 // ----------------------------------------------------------------------------
 export const standings: Standing[] = [
   { position: 1, equipe: "Titan Gaming", victoires: 5, defaites: 1, points: 15 },
-  { position: 2, equipe: "OSTAP ESPORTS", victoires: 4, defaites: 2, points: 12, estNous: true },
+  { position: 2, equipe: "lorem", victoires: 4, defaites: 2, points: 12, estNous: true },
   { position: 3, equipe: "Nova Dragons", victoires: 3, defaites: 3, points: 9 },
   { position: 4, equipe: "Crimson Foxes", victoires: 2, defaites: 4, points: 6 },
   { position: 5, equipe: "Aether Wolves", victoires: 1, defaites: 5, points: 3 },

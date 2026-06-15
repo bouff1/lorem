@@ -1,9 +1,12 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Roster from "@/components/Roster";
-import Results from "@/components/Results";
+import Schedule from "@/components/Schedule";
 import Standings from "@/components/Standings";
 import Footer from "@/components/Footer";
+
+// Rendu dynamique : on relit l'instantané Riot à chaque requête (toujours à jour).
+export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
@@ -12,7 +15,7 @@ export default function Home() {
       <main>
         <Hero />
         <Roster />
-        <Results />
+        <Schedule />
         <Standings />
       </main>
       <Footer />
