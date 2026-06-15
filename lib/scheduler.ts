@@ -1,25 +1,25 @@
 // =============================================================================
-//  Planificateur intégré : rafraîchit l'instantané Riot toutes les 10 minutes.
-//  Démarré au lancement du serveur via instrumentation.ts.
+//  Planificateur LOCAL (dev / Docker) : rafraîchit l'instantané toutes les 10 min.
+//  Sur Vercel (serverless), il est désactivé : c'est le Cron + /api/refresh
+//  qui déclenchent le rafraîchissement.
 // =============================================================================
 
-import cron from "node-cron";
 import { refreshSnapshot } from "./snapshot";
 
 let started = false;
+const INTERVAL_MS = 10 * 60 * 1000;
 
 export function startRiotScheduler() {
-  if (started) return; // évite les doubles démarrages (HMR en dev)
+  if (started) return;
+  if (process.env.VERCEL) return; // sur Vercel : géré par le cron, pas ici
   started = true;
 
   const run = (label: string) =>
     refreshSnapshot()
-      .then((s) => console.log(`[riot] ${label} — instantané à jour (${s.updatedAt})`))
+      .then((s) => console.log(`[riot] ${label} — à jour (${s.updatedAt})`))
       .catch((e) => console.error(`[riot] ${label} — échec`, e));
 
-  // Rafraîchissement immédiat au démarrage, puis toutes les 10 minutes.
   run("démarrage");
-  cron.schedule("*/10 * * * *", () => run("cron 10 min"));
-
-  console.log("[riot] planificateur démarré (rafraîchissement toutes les 10 min)");
+  setInterval(() => run("interval 10 min"), INTERVAL_MS);
+  console.log("[riot] planificateur local démarré (toutes les 10 min)");
 }

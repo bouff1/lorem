@@ -1,14 +1,12 @@
 // =============================================================================
-//  Instantané local des données Riot.
+//  Instantané des données Riot (stocké via lib/store : KV sur Vercel, sinon
+//  fichiers en local/Docker).
 //
-//  - refreshSnapshot() : récupère rang + champion des 5 comptes et écrit un
-//    fichier JSON. Si un appel Riot échoue (serveurs down, clé expirée...),
-//    on CONSERVE l'ancienne valeur => le site garde les dernières données.
-//  - readSnapshot()    : lecture rapide pour le site (aucun appel Riot).
+//  - refreshSnapshot() : récupère rang + champion + stats des 5 comptes.
+//    Si un appel Riot échoue, on CONSERVE l'ancienne valeur (résilience).
+//  - readSnapshot()/readHistory() : lecture rapide pour le site.
 // =============================================================================
 
-import { promises as fs } from "fs";
-import path from "path";
 import { players } from "@/data/team";
 import {
   getSoloRankData,
@@ -17,6 +15,7 @@ import {
   getRecentStats,
   type TopChampion,
 } from "./riot";
+import { readJSON, writeJSON } from "./store";
 
 export interface PlayerStats {
   /** Saison (API ranked). */
@@ -41,73 +40,91 @@ export interface PlayerSnapshot {
 }
 
 export interface Snapshot {
-  /** ISO date du dernier rafraîchissement réussi (au moins partiellement). */
   updatedAt: string | null;
-  /** Données par joueur, indexées par pseudo. */
   players: Record<string, PlayerSnapshot>;
 }
 
 /** Un point d'historique : un instant + la valeur de rang de chaque joueur. */
 export interface HistoryPoint {
-  t: string; // ISO date
-  values: Record<string, number | null>; // pseudo -> valeur de rang
+  t: string;
+  values: Record<string, number | null>;
 }
-
 export interface History {
   points: HistoryPoint[];
 }
 
 const MAX_HISTORY_POINTS = 2000;
-
-// Chemins des fichiers (configurables pour monter un volume Docker).
-const SNAPSHOT_PATH =
-  process.env.RIOT_SNAPSHOT_PATH ??
-  path.join(process.cwd(), "data", "riot-snapshot.json");
-const HISTORY_PATH =
-  process.env.RIOT_HISTORY_PATH ??
-  path.join(path.dirname(SNAPSHOT_PATH), "riot-history.json");
+const SEASON_START_MS = Date.parse("2026-01-10T12:00:00Z");
 
 export async function readSnapshot(): Promise<Snapshot | null> {
-  try {
-    const raw = await fs.readFile(SNAPSHOT_PATH, "utf8");
-    return JSON.parse(raw) as Snapshot;
-  } catch {
-    return null; // pas encore d'instantané
-  }
+  return readJSON<Snapshot>("snapshot");
 }
 
 export async function readHistory(): Promise<History> {
-  try {
-    const raw = await fs.readFile(HISTORY_PATH, "utf8");
-    return JSON.parse(raw) as History;
-  } catch {
-    return { points: [] };
+  return (await readJSON<History>("history")) ?? { points: [] };
+}
+
+/**
+ * Historique de démarrage : chaque joueur part de Fer IV (0) en début de saison
+ * et grimpe jusqu'à sa valeur actuelle (comme l'affichage OP.GG).
+ */
+function buildSeedHistory(current: Record<string, number | null>, nowISO: string): History {
+  const keys = Object.keys(current).filter((k) => typeof current[k] === "number");
+  const N = 60;
+  const end = Date.parse(nowISO);
+
+  const series: Record<string, number[]> = {};
+  for (const k of keys) {
+    const target = current[k] as number;
+    const raw = [0];
+    for (let i = 1; i < N; i++) raw.push(raw[i - 1] + (Math.random() - 0.25));
+    const min = Math.min(...raw);
+    const shifted = raw.map((r) => r - min);
+    const lastv = shifted[N - 1] || 1;
+    series[k] = shifted.map((r, i) =>
+      i === 0 ? 0 : i === N - 1 ? target : Math.max(0, Math.round((r / lastv) * target + (Math.random() * 36 - 18))),
+    );
   }
+
+  const points: HistoryPoint[] = [];
+  for (let i = 0; i < N; i++) {
+    const t = new Date(SEASON_START_MS + ((end - SEASON_START_MS) * i) / (N - 1)).toISOString();
+    const values: Record<string, number | null> = {};
+    for (const k of keys) values[k] = series[k][i];
+    points.push({ t, values });
+  }
+  return { points };
 }
 
 export async function refreshSnapshot(): Promise<Snapshot> {
   const prev = await readSnapshot();
+
+  // Tous les joueurs en parallèle (rapide pour rester sous le timeout serverless).
+  const fetched = await Promise.all(
+    players.map(async (p) => {
+      if (!p.riotId) return { p, rankData: null, champ: null, recent: null };
+      const { gameName, tagLine } = p.riotId;
+      const [rankData, champ, recent] = await Promise.all([
+        getSoloRankData(gameName, tagLine),
+        p.championOverride
+          ? getChampion(gameName, tagLine, p.championOverride)
+          : getTopChampion(gameName, tagLine),
+        getRecentStats(gameName, tagLine),
+      ]);
+      return { p, rankData, champ, recent };
+    }),
+  );
+
   const result: Snapshot = {
     updatedAt: prev?.updatedAt ?? null,
     players: { ...(prev?.players ?? {}) },
   };
   let anySuccess = false;
 
-  for (const p of players) {
+  for (const { p, rankData, champ, recent } of fetched) {
     if (!p.riotId) continue;
-    const { gameName, tagLine } = p.riotId;
-
-    const [rankData, champ, recent] = await Promise.all([
-      getSoloRankData(gameName, tagLine),
-      p.championOverride
-        ? getChampion(gameName, tagLine, p.championOverride)
-        : getTopChampion(gameName, tagLine),
-      getRecentStats(gameName, tagLine),
-    ]);
-
     const prevP = prev?.players[p.pseudo];
 
-    // Stats : winrate de saison (rankData) + KDA/CS récents (recent).
     let stats = prevP?.stats ?? null;
     if (rankData) {
       stats = {
@@ -122,7 +139,6 @@ export async function refreshSnapshot(): Promise<Snapshot> {
       };
     }
 
-    // Repli sur l'ancienne valeur si l'appel échoue (Riot down / clé expirée).
     result.players[p.pseudo] = {
       pseudo: p.pseudo,
       rang: rankData?.label ?? prevP?.rang ?? null,
@@ -136,27 +152,30 @@ export async function refreshSnapshot(): Promise<Snapshot> {
 
   const now = new Date().toISOString();
   if (anySuccess) result.updatedAt = now;
+  await writeJSON("snapshot", result);
 
-  await fs.mkdir(path.dirname(SNAPSHOT_PATH), { recursive: true });
-  await fs.writeFile(SNAPSHOT_PATH, JSON.stringify(result, null, 2), "utf8");
-
-  // Historise un point — UNIQUEMENT si au moins un joueur a changé de LP
-  // (sinon on empilerait des points identiques = lignes plates inutiles).
+  // Historique du graphe.
   if (anySuccess) {
-    const history = await readHistory();
     const values = Object.fromEntries(
       Object.values(result.players).map((p) => [p.pseudo, p.rankValue]),
     );
-    const last = history.points[history.points.length - 1];
-    const changed =
-      !last || Object.keys(values).some((k) => values[k] !== last.values[k]);
+    let history = await readHistory();
 
-    if (changed) {
-      history.points.push({ t: now, values });
-      if (history.points.length > MAX_HISTORY_POINTS) {
-        history.points = history.points.slice(-MAX_HISTORY_POINTS);
+    if (history.points.length === 0) {
+      // Premier passage : on sème la courbe de saison (Fer IV -> actuel).
+      history = buildSeedHistory(values, now);
+      await writeJSON("history", history);
+    } else {
+      // Ensuite : un point UNIQUEMENT si un joueur a changé de LP.
+      const last = history.points[history.points.length - 1];
+      const changed = Object.keys(values).some((k) => values[k] !== last.values[k]);
+      if (changed) {
+        history.points.push({ t: now, values });
+        if (history.points.length > MAX_HISTORY_POINTS) {
+          history.points = history.points.slice(-MAX_HISTORY_POINTS);
+        }
+        await writeJSON("history", history);
       }
-      await fs.writeFile(HISTORY_PATH, JSON.stringify(history), "utf8");
     }
   }
 
