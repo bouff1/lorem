@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+  /* Décale les ancres pour ne pas passer sous la navbar fixe. */
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background-color: #0a0a0f;
+  color: #e5e7eb;
+  /* Léger halo néon en arrière-plan. */
+  background-image:
+    radial-gradient(60rem 60rem at 80% -10%, rgba(217, 70, 239, 0.08), transparent 60%),
+    radial-gradient(50rem 50rem at -10% 20%, rgba(34, 211, 238, 0.08), transparent 60%);
+  background-attachment: fixed;
+}
+
+@layer components {
+  .neon-text {
+    color: #fff;
+    text-shadow:
+      0 0 8px rgba(34, 211, 238, 0.6),
+      0 0 24px rgba(217, 70, 239, 0.35);
+  }
+
+  .gradient-text {
+    background: linear-gradient(90deg, #22d3ee 0%, #d946ef 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .card {
+    background-color: #12121c;
+    border: 1px solid #1f1f2e;
+    border-radius: 1rem;
+  }
+
+  .section-title {
+    @apply font-display text-3xl sm:text-4xl font-bold tracking-wider uppercase;
+  }
+}
