@@ -17,10 +17,15 @@ export interface Player {
   role: Role;
   /** Chemin dans /public, ex. "/players/exemple.jpg". Laisse "" pour un avatar généré. */
   photo: string;
-  /** Rang saisi à la main, ex. "Challenger — 1240 LP". */
+  /** Rang saisi à la main. Utilisé en repli si l'API Riot ne répond pas. */
   rang: string;
   /** Lien direct vers le profil OP.GG du joueur. */
   opggUrl: string;
+  /**
+   * Riot ID (nouveau format Pseudo#TAG) pour récupérer le rang en direct via
+   * l'API Riot. Optionnel : sans lui, on affiche le champ `rang` saisi à la main.
+   */
+  riotId?: { gameName: string; tagLine: string };
   socials?: Social[];
 }
 
@@ -66,49 +71,48 @@ export const team: Team = {
 // ----------------------------------------------------------------------------
 //  JOUEURS (roster)
 // ----------------------------------------------------------------------------
+// Rang affiché automatiquement via l'API Riot si la clé est valide ; sinon le
+// champ `rang` ci-dessous (saisie manuelle) est utilisé en repli.
 export const players: Player[] = [
   {
-    pseudo: "Sylas",
-    nomReel: "Alex D.",
+    pseudo: "klexandre",
     role: "Top",
     photo: "",
-    rang: "Challenger — 1240 LP",
-    opggUrl: "https://www.op.gg/summoners/euw/Sylas-EUW",
-    socials: [{ label: "Twitter/X", url: "https://x.com/" }],
+    rang: "—",
+    riotId: { gameName: "klexandre", tagLine: "EUW" },
+    opggUrl: "https://www.op.gg/summoners/euw/klexandre-EUW",
   },
   {
-    pseudo: "Kha",
-    nomReel: "Marco L.",
+    pseudo: "gOfursel",
     role: "Jungle",
     photo: "",
-    rang: "Challenger — 980 LP",
-    opggUrl: "https://www.op.gg/summoners/euw/Kha-EUW",
+    rang: "—",
+    riotId: { gameName: "gOfursel", tagLine: "pidid" },
+    opggUrl: "https://www.op.gg/summoners/euw/gOfursel-pidid",
   },
   {
-    pseudo: "Faê",
-    nomReel: "Yanis B.",
+    pseudo: "TheGATmPaulo",
     role: "Mid",
     photo: "",
-    rang: "Grandmaster — 720 LP",
-    opggUrl: "https://www.op.gg/summoners/euw/Fae-EUW",
-    socials: [{ label: "Twitch", url: "https://twitch.tv/" }],
+    rang: "—",
+    riotId: { gameName: "TheGATmPaulo", tagLine: "EUW" },
+    opggUrl: "https://www.op.gg/summoners/euw/TheGATmPaulo-EUW",
   },
   {
-    pseudo: "Vael",
-    nomReel: "Tom R.",
+    pseudo: "Faller Ω",
     role: "ADC",
     photo: "",
-    rang: "Challenger — 1100 LP",
-    opggUrl: "https://www.op.gg/summoners/euw/Vael-EUW",
+    rang: "—",
+    riotId: { gameName: "Faller Ω", tagLine: "SamAD" },
+    opggUrl: "https://www.op.gg/summoners/euw/Faller%20%CE%A9-SamAD",
   },
   {
-    pseudo: "Lumi",
-    nomReel: "Sarah M.",
+    pseudo: "Mirage75015",
     role: "Support",
     photo: "",
-    rang: "Grandmaster — 640 LP",
-    opggUrl: "https://www.op.gg/summoners/euw/Lumi-EUW",
-    socials: [{ label: "Instagram", url: "https://instagram.com/" }],
+    rang: "—",
+    riotId: { gameName: "Mirage75015", tagLine: "EUW" },
+    opggUrl: "https://www.op.gg/summoners/euw/Mirage75015-EUW",
   },
 ];
 

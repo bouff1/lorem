@@ -9,8 +9,17 @@ const roleColors: Record<Role, string> = {
   Support: "text-neon-magenta border-neon-magenta/40",
 };
 
-export default function PlayerCard({ player }: { player: Player }) {
+export default function PlayerCard({
+  player,
+  liveRang,
+}: {
+  player: Player;
+  /** Rang récupéré en direct via l'API Riot ; null => on affiche player.rang. */
+  liveRang?: string | null;
+}) {
   const initials = player.pseudo.slice(0, 2).toUpperCase();
+  const rang = liveRang ?? player.rang;
+  const isLive = Boolean(liveRang);
 
   return (
     <article className="card group flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-neon-cyan/50 hover:shadow-neon-cyan">
@@ -44,7 +53,15 @@ export default function PlayerCard({ player }: { player: Player }) {
           <p className="text-sm text-gray-500">{player.nomReel}</p>
         )}
 
-        <p className="mt-3 text-sm font-medium text-neon-cyan">{player.rang}</p>
+        <p className="mt-3 flex items-center gap-2 text-sm font-medium text-neon-cyan">
+          {rang}
+          {isLive && (
+            <span
+              title="Rang en direct via l'API Riot"
+              className="inline-block h-2 w-2 rounded-full bg-neon-green shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+            />
+          )}
+        </p>
 
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
           <a
