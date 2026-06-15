@@ -7,16 +7,18 @@ import { promises as fs } from "fs";
 import path from "path";
 import { Redis } from "@upstash/redis";
 
-const useKV = Boolean(
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
-);
+// Supporte les deux conventions de nommage : Upstash (UPSTASH_REDIS_REST_*)
+// et l'intégration Vercel KV (KV_REST_API_*).
+const KV_URL = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+const KV_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+const useKV = Boolean(KV_URL && KV_TOKEN);
 
 const dataDir = process.env.RIOT_DATA_DIR ?? path.join(process.cwd(), "data");
 const filePath = (key: string) => path.join(dataDir, `riot-${key}.json`);
 
 let redis: Redis | null = null;
 function getRedis(): Redis {
-  if (!redis) redis = Redis.fromEnv();
+  if (!redis) redis = new Redis({ url: KV_URL!, token: KV_TOKEN! });
   return redis;
 }
 
